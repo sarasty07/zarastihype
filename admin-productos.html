@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — Productos</title>
+<style>
+  /* HERRAMIENTA SOLO PARA TI: ábrela con doble clic en tu computador. NO la subas a internet. */
+  :root{--bg:#141414;--sf:#1d1d1d;--fg:#ececea;--mu:#8c8c88;--ln:#2c2c2a;--ac:#d8d8d2}
+  *{box-sizing:border-box}
+  body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--fg);margin:0;padding:18px;line-height:1.45}
+  h1{font-size:1.1rem;letter-spacing:.2em;margin:0 0 6px}
+  .help{color:var(--mu);font-size:.85rem;margin:0 0 14px}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .btn,button{padding:9px 16px;border-radius:999px;border:1px solid var(--ln);background:var(--sf);color:var(--fg);cursor:pointer;font:inherit;font-size:.85rem}
+  .main{background:var(--ac)!important;color:#141414!important;font-weight:700;border:0!important}
+  #state{font-size:.82rem;color:var(--mu)}.warn{color:#e0b37a!important}
+  details{background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:10px 14px;margin-bottom:16px;font-size:.85rem}
+  summary{cursor:pointer}
+  .layout{display:grid;grid-template-columns:1fr 390px;gap:18px;align-items:start}
+  @media(max-width:860px){.layout{grid-template-columns:1fr}}
+  .item{display:flex;gap:10px;align-items:center;background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:8px;margin-bottom:8px}
+  .item img{width:50px;height:66px;object-fit:cover;border-radius:6px;background:#333}
+  .item .t{flex:1;min-width:0}.item .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item small{color:var(--mu)}.item button{padding:6px 10px;font-size:.78rem}
+  form{background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:16px;position:sticky;top:12px}
+  label{display:block;font-size:.78rem;color:var(--mu);margin:10px 0 4px}
+  input,select,textarea{width:100%;padding:10px;border-radius:9px;border:1px solid var(--ln);background:var(--bg);color:var(--fg);font:inherit}
+  textarea{height:96px;resize:vertical;font-size:.78rem}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .prev{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .prev img{width:54px;height:72px;object-fit:cover;border-radius:6px;background:#333}
+  #st{font-size:.8rem;margin-top:6px;color:var(--mu)}
+  pre{white-space:pre-wrap;font-size:.75rem;background:var(--bg);padding:10px;border-radius:8px;max-height:240px;overflow:auto}
+</style>
+</head>
+<body>
+<h1>ADMIN · PRODUCTOS</h1>
+<p class="help">1) Abre tu <b>tienda.html</b> · 2) Agrega o edita productos · 3) Descarga el <b>tienda.html</b> actualizado y reemplaza el que tienes (guarda antes una copia del anterior).</p>
+
+<div class="bar">
+  <label class="btn" style="margin:0">1 · Abrir mi tienda.html<input type="file" id="file" accept=".html" hidden></label>
+  <button class="main" id="dl">3 · Descargar tienda.html actualizado</button>
+  <button id="copy">Copiar solo el código</button>
+  <span id="state"></span>
+</div>
+
+<details>
+  <summary>Subir fotos desde aquí a ImgBB (opcional)</summary>
+  <label>Tu API key de ImgBB (se obtiene gratis en api.imgbb.com; se guarda solo en este navegador)</label>
+  <div style="display:flex;gap:8px"><input id="apikey"><button type="button" id="saveKey">Guardar</button></div>
+  <p class="help" style="margin:8px 0 0">Si no quieres usarlo, sube tus fotos en imgbb.com y pega aquí el enlace directo (el que empieza con https://i.ibb.co/).</p>
+</details>
+
+<div class="layout">
+  <section>
+    <input id="filter" placeholder="Buscar en mi lista…" style="margin-bottom:10px">
+    <div id="count" class="help"></div>
+    <div id="list"></div>
+  </section>
+
+  <form id="form">
+    <b id="formTitle">Nuevo producto</b>
+    <label>Nombre</label><input id="name" required>
+    <div class="two">
+      <div><label>Género</label><select id="g"><option>Hombre</option><option>Mujer</option></select></div>
+      <div><label>Categoría</label><select id="cat"></select></div>
+    </div>
+    <label>Precio (solo números)</label><input id="price" type="number" min="0" step="1000" required>
+    <label>Descripción</label><input id="desc">
+    <label>Fotos: un enlace por línea (la primera es la portada)</label>
+    <textarea id="imgs" placeholder="https://i.ibb.co/abc123/foto1.jpg&#10;https://i.ibb.co/def456/foto2.jpg"></textarea>
+    <label class="btn" style="margin:8px 0 0;display:inline-block">Subir fotos a ImgBB<input type="file" id="up" accept="image/*" multiple hidden></label>
+    <div id="st"></div>
+    <div class="prev" id="prev"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="main" type="submit" style="flex:1">Guardar producto</button>
+      <button type="button" id="cancel" hidden>Cancelar</button>
+    </div>
+  </form>
+</div>
+
+<details style="margin-top:16px"><summary>Ver el código que se va a poner en tienda.html</summary><pre id="code"></pre></details>
+
+<script>
+const CATS = ["Calzado","Sacos","Jeans","Camisetas","Camisas","Sudaderas","Gorras","Accesorios","Joyería"];
+const INI = /\/\/ >>> INICIO PRODUCTOS[^\n]*\n/, FIN = /[ \t]*\/\/ <<< FIN PRODUCTOS/;
+let items = [], editIdx = null, html = "", dirty = false;
+const $ = s => document.querySelector(s);
+const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const q = JSON.stringify, fmt = n => "$" + Number(n).toLocaleString("es-CO");
+$("#cat").innerHTML = CATS.map(c => `<option>${c}</option>`).join("");
+try { $("#apikey").value = localStorage.getItem("imgbbKey") || ""; } catch {}
+const mark = t => { $("#state").textContent = t; $("#state").className = dirty ? "warn" : ""; };
+const touch = () => { dirty = true; mark("● Cambios sin descargar"); renderList(); };
+
+/* Código que se pega en tienda.html (mismo formato p(...) de la tienda) */
+const code = () => items.map(it =>
+  `  p(${q(it.g)}, ${q(it.cat)}, ${q(it.name)}, ${it.price}, ${q(it.desc || "")}, [\n${it.imgs.map(i => `    ${q(i)},`).join("\n")}\n  ]),`).join("\n\n");
+const norm = t => String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+
+function renderList(){
+  const f = norm($("#filter").value);
+  $("#count").textContent = `${items.length} producto(s)`;
+  $("#list").innerHTML = items.map((p, i) => ({p, i})).filter(({p}) => norm(p.name + p.cat).includes(f)).map(({p, i}) => `
+    <div class="item"><img src="${esc(p.imgs[0] || "")}" alt="" referrerpolicy="no-referrer">
+      <div class="t"><b>${esc(p.name)}</b><small>${esc(p.cat)} · ${esc(p.g)} · ${fmt(p.price)} · ${p.imgs.length} foto(s)</small></div>
+      <button data-a="up" data-i="${i}" title="Subir">↑</button><button data-a="down" data-i="${i}" title="Bajar">↓</button>
+      <button data-a="edit" data-i="${i}">Editar</button><button data-a="dup" data-i="${i}">Duplicar</button><button data-a="del" data-i="${i}">✕</button>
+    </div>`).join("") || `<p class="help">Aún no hay productos. Abre tu tienda.html o crea el primero →</p>`;
+  $("#code").textContent = code();
+}
+$("#list").onclick = e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const i = +b.dataset.i, a = b.dataset.a;
+  if (a === "edit"){ const p = items[i]; editIdx = i;
+    $("#name").value = p.name; $("#g").value = p.g; $("#cat").value = p.cat; $("#price").value = p.price;
+    $("#desc").value = p.desc || ""; $("#imgs").value = p.imgs.join("\n"); preview();
+    $("#formTitle").textContent = "Editando: " + p.name; $("#cancel").hidden = false; scrollTo({top: 0, behavior: "smooth"}); return; }
+  if (a === "del" && confirm("¿Eliminar este producto?")) items.splice(i, 1);
+  if (a === "dup") items.splice(i + 1, 0, {...items[i], name: items[i].name + " (copia)", imgs: [...items[i].imgs]});
+  if (a === "up" && i > 0) [items[i-1], items[i]] = [items[i], items[i-1]];
+  if (a === "down" && i < items.length - 1) [items[i+1], items[i]] = [items[i], items[i+1]];
+  touch();
+};
+$("#filter").oninput = renderList;
+
+/* Fotos: una por línea + vista previa */
+const links = () => $("#imgs").value.split("\n").map(s => s.trim()).filter(Boolean);
+function preview(){ $("#prev").innerHTML = links().map(u => `<img src="${esc(u)}" alt="" referrerpolicy="no-referrer">`).join(""); }
+$("#imgs").oninput = preview;
+
+$("#saveKey").onclick = () => { try { localStorage.setItem("imgbbKey", $("#apikey").value.trim()); $("#st").textContent = "Clave guardada ✓"; } catch {} };
+$("#up").onchange = async e => {
+  const key = $("#apikey").value.trim();
+  if (!key){ $("#st").textContent = "Pon primero tu API key de ImgBB (sección de arriba) o pega los enlaces a mano."; return; }
+  for (const f of e.target.files){
+    $("#st").textContent = "Subiendo " + f.name + "…";
+    try {
+      const fd = new FormData(); fd.append("image", f);
+      const r = await fetch("https://api.imgbb.com/1/upload?key=" + encodeURIComponent(key), {method: "POST", body: fd});
+      const d = await r.json(); if (!d.success) throw new Error(d.error?.message || "Error");
+      $("#imgs").value = (links().concat(d.data.url)).join("\n"); preview();
+    } catch (err) { $("#st").textContent = "No se pudo subir (" + err.message + "). Sube la foto en imgbb.com y pega el enlace directo."; return; }
+  }
+  $("#st").textContent = "Fotos subidas ✓"; e.target.value = "";
+};
+
+/* Guardar producto */
+function reset(){ editIdx = null; $("#form").reset(); $("#prev").innerHTML = ""; $("#st").textContent = ""; $("#formTitle").textContent = "Nuevo producto"; $("#cancel").hidden = true; }
+$("#cancel").onclick = reset;
+$("#form").onsubmit = e => {
+  e.preventDefault();
+  if (!links().length){ $("#st").textContent = "Agrega al menos una foto (enlace)."; return; }
+  const p = {g: $("#g").value, cat: $("#cat").value, name: $("#name").value.trim(), price: Number($("#price").value), desc: $("#desc").value.trim(), imgs: links()};
+  if (editIdx !== null) items[editIdx] = p; else items.unshift(p);   // los nuevos salen primero en la tienda
+  reset(); touch();
+};
+
+/* Abrir tienda.html: lee los p(...) entre los marcadores */
+$("#file").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const txt = await f.text(), a = txt.match(INI), b = txt.match(FIN);
+  if (!a || !b){ alert("Ese archivo no parece tu tienda.html (no encontré las líneas INICIO/FIN PRODUCTOS)."); return; }
+  const bloque = txt.slice(a.index + a[0].length, b.index);
+  try {
+    const stub = (g, cat, name, price, desc, imgs) => ({g: /muj/i.test(g) ? "Mujer" : "Hombre", cat, name, price: Number(String(price).replace(/[^\d]/g, "")), desc, imgs: imgs || []});
+    items = new Function("p", "return [" + bloque + "\n]")(stub);
+  } catch (err) { alert("No pude leer los productos de tu archivo: " + err.message); return; }
+  html = txt; dirty = false; mark(`tienda.html cargado: ${items.length} producto(s)`); renderList();
+};
+
+/* Descargar tienda.html actualizado (solo cambia lo que está entre los marcadores) */
+$("#dl").onclick = () => {
+  if (!html){ alert("Primero abre tu tienda.html (botón 1)."); return; }
+  const a = html.match(INI), b = html.match(FIN);
+  const out = html.slice(0, a.index + a[0].length) + "\n" + code() + "\n\n" + html.slice(b.index);
+  const url = URL.createObjectURL(new Blob([out], {type: "text/html"}));
+  Object.assign(document.createElement("a"), {href: url, download: "tienda.html"}).click();
+  dirty = false; mark("Descargado ✓ — reemplaza tu tienda.html con ese archivo");
+};
+$("#copy").onclick = async () => { try { await navigator.clipboard.writeText(code()); mark("Código copiado ✓"); } catch { mark("No se pudo copiar: ábrelo en «Ver el código» y cópialo."); } };
+addEventListener("beforeunload", e => { if (dirty) e.preventDefault(); });
+renderList();
+</script>
+</body>
+</html>

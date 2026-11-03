@@ -1,0 +1,146 @@
+{
+  "clientes": [
+    {
+      "codigo": "J001",
+      "pin": "4821",
+      "nombre": "Juan Cielo Azul",
+      "prendas": [
+        "Gorra (x2)",
+        "Reloj",
+        "Zapatillas",
+        "Buzo"
+      ],
+      "total": 430000.0,
+      "abonos": [
+        {
+          "fecha": "2026-10-30",
+          "monto": 100000.0
+        }
+      ],
+      "saldo_pendiente": 330000.0
+    },
+    {
+      "codigo": "M001",
+      "pin": "9103",
+      "nombre": "Monica Cielo Azul",
+      "prendas": [
+        "Gorra",
+        "Zapatillas"
+      ],
+      "total": 195000.0,
+      "abonos": [
+        {
+          "fecha": "2026-10-30",
+          "monto": 30000.0
+        },
+        {
+          "fecha": "2026-10-31",
+          "monto": 70000.0
+        }
+      ],
+      "saldo_pendiente": 95000.0
+    },
+    {
+      "codigo": "K001",
+      "pin": "3742",
+      "nombre": "Kelly Cielo azul",
+      "prendas": [
+        "Zapatillas"
+      ],
+      "total": 140000.0,
+      "abonos": [
+        {
+          "fecha": "2026-10-31",
+          "monto": 140000.0
+        }
+      ],
+      "saldo_pendiente": 0.0
+    },
+    {
+      "codigo": "O001",
+      "pin": "6519",
+      "nombre": "Oswal Ramirez",
+      "prendas": [
+        "Gorra (x2)"
+      ],
+      "total": 110000.0,
+      "abonos": [
+        {
+          "fecha": "2026-10-31",
+          "monto": 110000.0
+        }
+      ],
+      "saldo_pendiente": 0.0
+    },
+    {
+      "codigo": "S001",
+      "pin": "8240",
+      "nombre": "Samir Barbosa",
+      "prendas": [
+        "Gorra",
+        "Zapatillas",
+        "Buzo"
+      ],
+      "total": 290000.0,
+      "abonos": [
+        {
+          "fecha": "2026-10-24",
+          "monto": 55000.0
+        }
+      ],
+      "saldo_pendiente": 235000.0
+    },
+    {
+      "codigo": "S002",
+      "pin": "1593",
+      "nombre": "Santiago Zarasti",
+      "prendas": [
+        "Zapatillas"
+      ],
+      "total": 140000.0,
+      "abonos": [],
+      "saldo_pendiente": 140000.0
+    },
+    {
+      "codigo": "B001",
+      "pin": "7381",
+      "nombre": "Brandon Villafañe",
+      "prendas": [
+        "Buzo"
+      ],
+      "total": 45000.0,
+      "abonos": [
+        {
+          "fecha": "2026-10-31",
+          "monto": 45000.0
+        }
+      ],
+      "saldo_pendiente": 0.0
+    },
+    {
+      "codigo": "J002",
+      "pin": "1998",
+      "nombre": "Jhonatan Gutierrez",
+      "prendas": [],
+      "total": 0.0,
+      "abonos": [],
+      "saldo_pendiente": 0.0
+    },
+    {
+      "codigo": "K002",
+      "pin": "2124",
+      "nombre": "Kevin Wilches",
+      "prendas": [
+        "gorra"
+      ],
+      "total": 55000.0,
+      "abonos": [
+        {
+          "fecha": "2026-10-31",
+          "monto": 55000.0
+        }
+      ],
+      "saldo_pendiente": 0.0
+    }
+  ]
+}

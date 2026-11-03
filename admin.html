@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — Generar clientes.json</title>
+<style>
+  /* HERRAMIENTA SOLO PARA TI: ábrela con doble clic en tu computador. NO la subas a internet. */
+  body{font-family:system-ui,sans-serif;background:#141414;color:#ececea;max-width:760px;margin:30px auto;padding:0 16px;line-height:1.5}
+  h1{font-size:1.2rem;letter-spacing:.15em}
+  textarea{width:100%;height:340px;background:#1d1d1d;color:#ececea;border:1px solid #2c2c2a;border-radius:10px;padding:12px;font:13px/1.5 ui-monospace,Menlo,monospace}
+  button,input[type=file]::file-selector-button{padding:10px 18px;border-radius:999px;border:0;background:#d8d8d2;color:#141414;font-weight:700;cursor:pointer;margin:8px 8px 8px 0}
+  #msg{margin-top:10px;font-size:.9rem}.err{color:#e08a8a}.ok{color:#9fd3a8}
+  small{color:#8c8c88}
+</style>
+</head>
+<body>
+<h1>GENERAR clientes.json (cifrado)</h1>
+<p><small>1) Carga tu archivo privado <b>clientes-privado.json</b> (o pega el contenido). 2) Pulsa Generar. 3) Sube a tu página el <b>clientes.json</b> descargado.</small></p>
+<input type="file" id="file" accept=".json">
+<textarea id="src" spellcheck="false" placeholder='{"clientes":[{"codigo":"CL-001","pin":"482915","nombre":"...","prendas":["..."],"total":100000,"abonos":[{"fecha":"2026-10-01","monto":50000}]}]}'></textarea>
+<div>
+  <button id="gen">Generar clientes.json</button>
+  <button id="pin">PIN aleatorio de 6 dígitos</button> <span id="pinOut"></span>
+</div>
+<div id="msg"></div>
+
+<script>
+/* IMPORTANTE: estas funciones deben ser idénticas a las de tienda.html */
+const enc = new TextEncoder();
+const limpiar = t => String(t ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+const toB64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
+async function hash(t){
+  const h = await crypto.subtle.digest("SHA-256", enc.encode(t));
+  return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("");
+}
+async function derivar(codigo, pin, salt){
+  const base = await crypto.subtle.importKey("raw", enc.encode(limpiar(codigo) + ":" + String(pin).trim()), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2", salt, iterations:150000, hash:"SHA-256"}, base, {name:"AES-GCM", length:256}, false, ["encrypt"]);
+}
+/* Cifra los datos de un cliente con una llave hecha de su CÓDIGO + PIN */
+async function cifrar(c){
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await derivar(c.codigo, c.pin, salt);
+  const {nombre, prendas, total, abonos} = c;
+  const data = await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, enc.encode(JSON.stringify({nombre, prendas, total, abonos})));
+  return {id: await hash(limpiar(c.codigo)), salt: toB64(salt), iv: toB64(iv), data: toB64(data)};
+}
+
+const $ = s => document.querySelector(s), msg = $("#msg");
+const say = (t, ok) => { msg.className = ok ? "ok" : "err"; msg.textContent = t; };
+
+$("#file").onchange = async e => { const f = e.target.files[0]; if (f) $("#src").value = await f.text(); };
+$("#pin").onclick = () => { $("#pinOut").textContent = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, "0"); };
+
+$("#gen").onclick = async () => {
+  let lista;
+  try { lista = JSON.parse($("#src").value).clientes; } catch { return say("El JSON tiene un error de formato (revisa comillas y comas).", false); }
+  if (!Array.isArray(lista) || !lista.length) return say("No encontré la lista \"clientes\".", false);
+  const vistos = new Set();
+  for (const c of lista){
+    if (!c.codigo || !c.nombre || typeof c.total !== "number") return say(`Falta código, nombre o total en: ${JSON.stringify(c.codigo || c.nombre)}`, false);
+    if (String(c.pin ?? "").trim().length < 4) return say(`El cliente ${c.codigo} necesita un PIN de al menos 4 caracteres (recomendado 6).`, false);
+    if (vistos.has(limpiar(c.codigo))) return say(`Código repetido: ${c.codigo}`, false);
+    vistos.add(limpiar(c.codigo));
+  }
+  say("Cifrando…", true);
+  const registros = [];
+  for (const c of lista) registros.push(await cifrar(c));
+  const blob = new Blob([JSON.stringify({version: 1, registros}, null, 1)], {type: "application/json"});
+  const a = Object.assign(document.createElement("a"), {href: URL.createObjectURL(blob), download: "clientes.json"});
+  a.click();
+  say(`Listo: ${registros.length} cliente(s) cifrados. Sube el clientes.json descargado.`, true);
+};
+</script>
+</body>
+</html>
